@@ -43,7 +43,9 @@ end
 rule "Teacher time efficiency"
 when
     Lesson($teacher: teacher, $timeslot: timeslot)
-    Lesson(teacher == $teacher, timeslot.getDayOfWeek() == $timeslot.getDayOfWeek())
+    Lesson(teacher == $teacher, timeslot.getDayOfWeek() == $timeslot.getDayOfWeek(),
+           $dur: Duration.between($timeslot.getEndTime(), timeslot.getStartTime()),
+           !$dur.isNegative(), $dur.compareTo(Duration.ofMinutes(30)) <= 0)
 then
     scoreHolder.addSoftConstraintMatch(kcontext, 1);
 end
@@ -51,7 +53,9 @@ end
 rule "Student group subject variety"
 when
     Lesson($subject: subject, $studentGroup: studentGroup, $timeslot: timeslot)
-    Lesson(subject == $subject, studentGroup == $studentGroup, timeslot.getDayOfWeek() == $timeslot.getDayOfWeek())
+    Lesson(subject == $subject, studentGroup == $studentGroup, timeslot.getDayOfWeek() == $timeslot.getDayOfWeek(),
+           $dur: Duration.between($timeslot.getEndTime(), timeslot.getStartTime()),
+           !$dur.isNegative(), $dur.compareTo(Duration.ofMinutes(30)) <= 0)
 then
     scoreHolder.addSoftConstraintMatch(kcontext, -1);
 end
