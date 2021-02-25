@@ -1,0 +1,57 @@
+package org.acme.schooltimetabling.solver;
+    dialect "java"
+
+import java.time.Duration;
+
+import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScoreHolder;
+import org.acme.schooltimetabling.domain.Lesson;
+
+global HardSoftScoreHolder scoreHolder;
+
+rule "Room conflict"
+when
+    Lesson($timeslot: timeslot, $room: room)
+    Lesson(timeslot == $timeslot, room == $room)
+then
+    scoreHolder.addHardConstraintMatch(kcontext, -1);
+end
+
+rule "Teacher conflict"
+when
+    Lesson($timeslot: timeslot, $teacher: teacher)
+    Lesson(timeslot == $timeslot, teacher == $teacher)
+then
+    scoreHolder.addHardConstraintMatch(kcontext, -1);
+end
+
+rule "Student group conflict"
+when
+    Lesson($timeslot: timeslot, $studentGroup: studentGroup)
+    Lesson(timeslot == $timeslot, studentGroup == $studentGroup)
+then
+    scoreHolder.addHardConstraintMatch(kcontext, -1);
+end
+
+rule "Teacher room stability"
+when
+    Lesson($teacher: teacher, $room: room)
+    Lesson(teacher == $teacher, room != $room)
+then
+    scoreHolder.addSoftConstraintMatch(kcontext, -1);
+end
+
+rule "Teacher time efficiency"
+when
+    Lesson($teacher: teacher, $timeslot: timeslot)
+    Lesson(teacher == $teacher, timeslot.getDayOfWeek() == $timeslot.getDayOfWeek())
+then
+    scoreHolder.addSoftConstraintMatch(kcontext, 1);
+end
+
+rule "Student group subject variety"
+when
+    Lesson($subject: subject, $studentGroup: studentGroup, $timeslot: timeslot)
+    Lesson(subject == $subject, studentGroup == $studentGroup, timeslot.getDayOfWeek() == $timeslot.getDayOfWeek())
+then
+    scoreHolder.addSoftConstraintMatch(kcontext, -1);
+end

@@ -28,7 +28,7 @@ import org.optaplanner.test.api.score.stream.ConstraintVerifier;
 
 class TimeTableConstraintProviderTest {
 
-    private static final Room ROOM1 = new Room(1, "Room1");
+    /*private static final Room ROOM1 = new Room(1, "Room1");
     private static final Room ROOM2 = new Room(2, "Room2");
     private static final Timeslot TIMESLOT1 = new Timeslot(1, DayOfWeek.MONDAY, LocalTime.NOON);
     private static final Timeslot TIMESLOT2 = new Timeslot(2, DayOfWeek.TUESDAY, LocalTime.NOON);
@@ -107,5 +107,5 @@ class TimeTableConstraintProviderTest {
                         lessonInAnotherGroup)
                 .penalizesBy(1); // Second tuesday lesson immediately follows the first.
     }
-
+*/
 }
