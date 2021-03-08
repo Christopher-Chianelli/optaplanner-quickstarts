@@ -10,52 +10,53 @@ global HardSoftScoreHolder scoreHolder;
 
 rule "Room conflict"
 when
-    Lesson($timeslot: timeslot, $room: room)
-    Lesson(timeslot == $timeslot, room == $room)
+    Lesson($leftId: id, $leftTimeslot: timeslot, timeslot != null, $leftRoom: room, room != null)
+    Lesson(id != $leftId, timeslot == $leftTimeslot, room == $leftRoom)
 then
     scoreHolder.addHardConstraintMatch(kcontext, -1);
 end
 
 rule "Teacher conflict"
 when
-    Lesson($timeslot: timeslot, $teacher: teacher)
-    Lesson(timeslot == $timeslot, teacher == $teacher)
+    Lesson($leftId: id, $leftTimeslot: timeslot, timeslot != null, $leftTeacher: teacher)
+    Lesson(id != $leftId, timeslot == $leftTimeslot, teacher == $leftTeacher)
 then
     scoreHolder.addHardConstraintMatch(kcontext, -1);
 end
 
 rule "Student group conflict"
 when
-    Lesson($timeslot: timeslot, $studentGroup: studentGroup)
-    Lesson(timeslot == $timeslot, studentGroup == $studentGroup)
+    Lesson($leftId: id, $leftTimeslot: timeslot, timeslot != null, $leftStudentGroup: studentGroup)
+    Lesson(id != $leftId, timeslot == $leftTimeslot, studentGroup == $leftStudentGroup)
 then
     scoreHolder.addHardConstraintMatch(kcontext, -1);
 end
 
 rule "Teacher room stability"
 when
-    Lesson($teacher: teacher, $room: room)
-    Lesson(teacher == $teacher, room != $room)
+    Lesson($leftId: id, $leftTeacher: teacher, $leftRoom: room, room != null)
+    Lesson(id != $leftId, teacher == $leftTeacher, room != $leftRoom, room != null)
 then
     scoreHolder.addSoftConstraintMatch(kcontext, -1);
 end
 
 rule "Teacher time efficiency"
 when
-    Lesson($teacher: teacher, $timeslot: timeslot)
-    Lesson(teacher == $teacher, timeslot.getDayOfWeek() == $timeslot.getDayOfWeek(),
-           $dur: Duration.between($timeslot.getEndTime(), timeslot.getStartTime()),
-           !$dur.isNegative(), $dur.compareTo(Duration.ofMinutes(30)) <= 0)
+    Lesson($leftId: id, $leftTeacher: teacher, $leftTimeslot: timeslot, timeslot != null)
+    Lesson(id != $leftId, teacher == $leftTeacher, timeslot != null, timeslot.getDayOfWeek() == $leftTimeslot.getDayOfWeek(),
+           !Duration.between($leftTimeslot.getEndTime(), timeslot.getStartTime()).isNegative(),
+           Duration.between($leftTimeslot.getEndTime(), timeslot.getStartTime()).compareTo(Duration.ofMinutes(30)) <= 0)
 then
     scoreHolder.addSoftConstraintMatch(kcontext, 1);
 end
 
 rule "Student group subject variety"
 when
-    Lesson($subject: subject, $studentGroup: studentGroup, $timeslot: timeslot)
-    Lesson(subject == $subject, studentGroup == $studentGroup, timeslot.getDayOfWeek() == $timeslot.getDayOfWeek(),
-           $dur: Duration.between($timeslot.getEndTime(), timeslot.getStartTime()),
-           !$dur.isNegative(), $dur.compareTo(Duration.ofMinutes(30)) <= 0)
+    Lesson($leftId: id, $leftSubject: subject, $leftStudentGroup: studentGroup, $leftTimeslot: timeslot, timeslot != null)
+    Lesson(id != $leftId, subject == $leftSubject, studentGroup == $leftStudentGroup, timeslot != null,
+           timeslot.getDayOfWeek() == $leftTimeslot.getDayOfWeek(),
+           !Duration.between($leftTimeslot.getEndTime(), timeslot.getStartTime()).isNegative(),
+           Duration.between($leftTimeslot.getEndTime(), timeslot.getStartTime()).compareTo(Duration.ofMinutes(30)) <= 0)
 then
     scoreHolder.addSoftConstraintMatch(kcontext, -1);
 end
