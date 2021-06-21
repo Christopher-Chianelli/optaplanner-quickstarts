@@ -78,7 +78,7 @@
             <configuration>
               <rules>
                 <requireFilesExist>
-                  <message>You must set JAVA_HOME to a GraalVM with Python installed.</message>
+                  <message>You must set GRAALVM_HOME to a GraalVM with Python installed.</message>
                   <files>
                     <file>${env.GRAALVM_HOME}/bin/graalpython</file>
                   </files>

@@ -18,7 +18,6 @@ import org.optaplanner.core.config.solver.SolverConfig;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Paths;
 import java.time.Duration;
 
 public class MainApplication {
@@ -35,8 +34,6 @@ public class MainApplication {
     }
 
     public static void main(String[] args) throws Exception {
-        Value pythonObjects = getPythonObjects();
-
         SolverConfig solverConfig = new SolverConfig();
         solverConfig.withEntityClasses(Lesson.class)
                 .withSolutionClass(TimeTable.class)
