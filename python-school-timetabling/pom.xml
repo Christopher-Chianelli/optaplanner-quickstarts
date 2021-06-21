@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.acme</groupId>
+  <artifactId>optaplanner-python-school-timetabling-quickstart</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <properties>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+    <maven.compiler.release>11</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <version.io.quarkus>1.13.4.Final</version.io.quarkus>
+    <version.org.optaplanner>8.8.0-SNAPSHOT</version.org.optaplanner>
+
+    <version.compiler.plugin>3.8.1</version.compiler.plugin>
+    <version.surefire.plugin>2.22.2</version.surefire.plugin>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.quarkus</groupId>
+        <!-- Alternatively, use <artifactId>quarkus-universe-bom</artifactId>
+         which includes both quarkus-bom and optaplanner-bom. -->
+        <artifactId>quarkus-bom</artifactId>
+        <version>${version.io.quarkus}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.optaplanner</groupId>
+        <artifactId>optaplanner-bom</artifactId>
+        <version>${version.org.optaplanner}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.graalvm.sdk</groupId>
+      <artifactId>graal-sdk</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.optaplanner</groupId>
+      <artifactId>optaplanner-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.2.3</version>
+      <scope>runtime</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.0.0-M3</version>
+        <executions>
+          <execution>
+            <id>enforce-graalvm-python</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireFilesExist>
+                  <message>You must set JAVA_HOME to a GraalVM with Python installed.</message>
+                  <files>
+                    <file>${env.GRAALVM_HOME}/bin/graalpython</file>
+                  </files>
+                </requireFilesExist>
+              </rules>
+              <fail>true</fail>
+              <failFast>true</failFast>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.1</version>
+        <configuration>
+          <executable>${env.GRAALVM_HOME}/bin/javac</executable>
+        </configuration>
+      </plugin>
+    </plugins>
+    <resources>
+      <!--
+       ! We make sure to include the virtual environment and any additional
+       ! Python files with the build artifacts.
+        -->
+      <resource>
+        <directory>${project.basedir}</directory>
+        <includes>
+          <include>venv/**/*</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>${project.basedir}/src/main/resources/python/</directory>
+        <includes>
+          <include>*.py</include>
+        </includes>
+      </resource>
+    </resources>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>prepare-venv</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.6.0</version>
+            <executions>
+              <execution>
+                <!--
+                 ! This execution creates the virtual environment
+                 ! to contain the Python packages that we will be
+                 ! using in the Java program.
+                  -->
+                <id>Prepare venv</id>
+                <phase>generate-resources</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>${env.GRAALVM_HOME}/bin/graalpython</executable>
+                  <arguments>
+                    <argument>-m</argument>
+                    <argument>venv</argument>
+                    <argument>venv</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <!--
+                 ! This execution installs the required
+                 ! packages. To do so it simply calls the 'pip'
+                 ! package manager inside the virtual environment
+                 ! that we've created above.
+                  -->
+                <id>Install required packages into venv</id>
+                <phase>generate-resources</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>venv/bin/pip</executable>
+                  <arguments>
+                    <argument>install</argument>
+                    <argument>pygal==2.4.0</argument>
+                  </arguments>
+                  <environmentVariables>
+                    <VIRTUAL_ENV>${project.basedir}/venv</VIRTUAL_ENV>
+                  </environmentVariables>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+      <activation>
+        <file>
+          <missing>venv/bin/pip</missing>
+        </file>
+      </activation>
+    </profile>
+    <profile>
+      <id>run</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.0.0</version>
+            <executions>
+              <execution>
+                <id>default-cli</id>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <executable>${env.GRAALVM_HOME}/bin/java</executable>
+              <arguments>
+                <argument>-classpath</argument>
+                <classpath/>
+                <argument>org.acme.schooltimetabling.MainApplication</argument>
+              </arguments>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+      <activation>
+        <file>
+          <exists>venv/bin/pip</exists>
+        </file>
+      </activation>
+    </profile>
+  </profiles>
+
+  <repositories>
+    <repository>
+      <id>jboss-public-repository-group</id>
+      <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+      <releases>
+        <!-- Get releases only from Maven Central which is faster. -->
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+</project>
