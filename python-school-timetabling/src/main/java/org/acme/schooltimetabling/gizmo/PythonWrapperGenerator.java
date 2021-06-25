@@ -10,6 +10,7 @@ import io.quarkus.gizmo.ResultHandle;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyNativeObject;
 import org.graalvm.polyglot.proxy.ProxyObject;
+import org.objectweb.asm.Type;
 import org.optaplanner.core.api.domain.entity.PlanningEntity;
 import org.optaplanner.core.api.domain.lookup.PlanningId;
 import org.optaplanner.core.api.domain.solution.PlanningEntityCollectionProperty;
@@ -229,7 +230,8 @@ public class PythonWrapperGenerator {
                 .interfaces(ProxyObject.class, ProxyNativeObject.class)
                 .classOutput(classOutput)
                 .build()) {
-            classCreator.addAnnotation(PlanningSolution.class);
+            classCreator.addAnnotation(PlanningSolution.class)
+                .addValue("solutionCloner", Type.getType(PythonPlanningSolutionCloner.class));
             FieldDescriptor valueField = classCreator.getFieldCreator(pythonBindingFieldName, Value.class)
                     .setModifiers(Modifier.PUBLIC).getFieldDescriptor();
             generateWrapperMethods(classCreator, valueField, optaplannerMethodAnnotations);

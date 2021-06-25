@@ -47,9 +47,6 @@ public class MainApplication {
     public static void main(String[] args) throws Exception {
         Value pythonObjects = getPythonObjects();
         SolverConfig solverConfig = pythonObjects.getMember("solverConfig").as(SolverConfig.class);
-        Map<String, SolutionCloner> solutionClonerMap = new HashMap<>();
-        solutionClonerMap.put(solverConfig.getSolutionClass().getName() + "$OptaPlanner$SolutionCloner", new PythonPlanningSolutionCloner());
-        solverConfig.withGizmoSolutionClonerMap(solutionClonerMap);
         Solver solver = SolverFactory.create(solverConfig).buildSolver();
         Object solution = solver.solve(pythonObjects.getMember("problem").as(Supplier.class).get());
         System.out.println(solution);
