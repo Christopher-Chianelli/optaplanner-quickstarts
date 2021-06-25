@@ -1,17 +1,12 @@
-import polyglot
 import java
-from setup import generatePlanningEntityClass, generatePlanningSolutionClass, generateConstraintProviderClass, generateProblemFactClass, wrap
-from domain import TimeTable, Lesson, Timeslot, Room, generateProblem
+from setup import generatePlanningEntityClass, generatePlanningSolutionClass, generateProblemFactClass
+from domain import TimeTable, Lesson, Room
 from datetime import datetime, date, timedelta
 
 TimeTableClass = generatePlanningSolutionClass(TimeTable)
 LessonClass = generatePlanningEntityClass(Lesson)
 
 RoomClass = generateProblemFactClass(Room)
-
-LocalTime = java.type("java.time.LocalTime")
-Duration = java.type("java.time.Duration")
-DayOfWeek =  java.type("java.time.DayOfWeek")
 
 Joiners = java.type("org.optaplanner.core.api.score.stream.Joiners")
 HardSoftScore = java.type("org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore")
@@ -89,16 +84,3 @@ def studentGroupSubjectVariety(constraintFactory):
                         Joiners.equal(lambda lesson: lesson.timeslot is not None and lesson.timeslot.dayOfWeek)) \
         .filter(within30Mins) \
         .penalize("Student group subject variety", HardSoftScore.ONE_SOFT)
-
-PythonConstraintProvider = generateConstraintProviderClass(defineConstraints)
-
-SolverConfig = java.type("org.optaplanner.core.config.solver.SolverConfig")
-
-solverConfig = SolverConfig().withEntityClasses(LessonClass) \
-    .withSolutionClass(TimeTableClass) \
-    .withConstraintProviderClass(PythonConstraintProvider) \
-    .withTerminationSpentLimit(Duration.ofSeconds(30))
-
-problem = generateProblem()
-polyglot.export_value("solverConfig", solverConfig)
-polyglot.export_value("problem", wrap(TimeTableClass, problem))

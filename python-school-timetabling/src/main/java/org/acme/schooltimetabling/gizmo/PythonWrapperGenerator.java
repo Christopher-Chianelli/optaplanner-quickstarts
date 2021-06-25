@@ -80,6 +80,14 @@ public class PythonWrapperGenerator {
         return wrap(javaClass, object, new HashMap<>());
     }
 
+    public static Value unwrap(Class<?> javaClass, Object object) {
+        try {
+            return (Value) javaClass.getField(pythonBindingFieldName).get(object);
+        } catch (IllegalAccessException | NoSuchFieldException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     public static <T> T wrap(Class<T> javaClass, Value object, Map<Value, Object> valueObjectMap) {
         if (valueObjectMap.containsKey(object)) {
             return (T) valueObjectMap.get(object);
@@ -98,7 +106,6 @@ public class PythonWrapperGenerator {
                 return (T) out;
             } else {
                 T out = (T) javaClass.getConstructor(Value.class, Map.class).newInstance(object, valueObjectMap);
-                // javaClass.getMethod("__setup", Value.class, Map.class).invoke(out, object, valueObjectMap);
                 valueObjectMap.put(object, out);
                 return out;
             }

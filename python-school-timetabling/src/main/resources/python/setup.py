@@ -16,7 +16,7 @@ def getOptaPlannerAnnotations(pythonClass):
     return annotated_methods
 
 def wrap(javaClass, pythonObject):
-    return PythonWrapperGenerator.wrapObject(javaClass, pythonObject)
+    return PythonWrapperGenerator.wrap(javaClass, pythonObject)
 
 def generateProblemFactClass(pythonClass):
     optaplannerAnnotations = getOptaPlannerAnnotations(pythonClass)
