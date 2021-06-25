@@ -3,10 +3,12 @@ package org.acme.schooltimetabling;
 import org.acme.schooltimetabling.bootstrap.DemoDataGenerator;
 import org.acme.schooltimetabling.domain.Lesson;
 import org.acme.schooltimetabling.domain.TimeTable;
+import org.acme.schooltimetabling.gizmo.PythonPlanningSolutionCloner;
 import org.acme.schooltimetabling.solver.TimeTableConstraintProvider;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
+import org.optaplanner.core.api.domain.solution.cloner.SolutionCloner;
 import org.optaplanner.core.api.score.stream.Constraint;
 import org.optaplanner.core.api.score.stream.ConstraintFactory;
 import org.optaplanner.core.api.score.stream.ConstraintProvider;
@@ -15,10 +17,19 @@ import org.optaplanner.core.api.solver.SolverFactory;
 import org.optaplanner.core.config.score.director.ScoreDirectorFactoryConfig;
 import org.optaplanner.core.config.solver.EnvironmentMode;
 import org.optaplanner.core.config.solver.SolverConfig;
+import org.optaplanner.core.impl.domain.score.descriptor.ScoreDescriptor;
+import org.optaplanner.core.impl.domain.solution.cloner.gizmo.GizmoSolutionClonerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Supplier;
 
 public class MainApplication {
 
@@ -34,23 +45,18 @@ public class MainApplication {
     }
 
     public static void main(String[] args) throws Exception {
-        SolverConfig solverConfig = new SolverConfig();
-        solverConfig.withEntityClasses(Lesson.class)
-                .withSolutionClass(TimeTable.class)
-                .withConstraintProviderClass(PythonConstraintProvider.class)
-                // .withEnvironmentMode(EnvironmentMode.FULL_ASSERT)
-                .withTerminationSpentLimit(Duration.ofSeconds(30));
-
-        //solverConfig.getScoreDirectorFactoryConfig().withAssertionScoreDirectorFactory(
-        //        new ScoreDirectorFactoryConfig().withConstraintProviderClass(TimeTableConstraintProvider.class)
-        //);
-
-        Solver<TimeTable> solver = SolverFactory.<TimeTable>create(solverConfig).buildSolver();
-        TimeTable solution = solver.solve(DemoDataGenerator.generateDemoData());
+        Value pythonObjects = getPythonObjects();
+        SolverConfig solverConfig = pythonObjects.getMember("solverConfig").as(SolverConfig.class);
+        Map<String, SolutionCloner> solutionClonerMap = new HashMap<>();
+        solutionClonerMap.put(solverConfig.getSolutionClass().getName() + "$OptaPlanner$SolutionCloner", new PythonPlanningSolutionCloner());
+        solverConfig.withGizmoSolutionClonerMap(solutionClonerMap);
+        Solver solver = SolverFactory.create(solverConfig).buildSolver();
+        Object solution = solver.solve(pythonObjects.getMember("problem").as(Supplier.class).get());
         System.out.println(solution);
     }
 
     public static Value getPythonObjects() {
+        Path pythonScriptLocation = Path.of("src/main/resources/python/").toAbsolutePath();
         Context context = Context.newBuilder(PYTHON).
                 // It is a good idea to start with allowAllAccess(true) and only when everything is
                 // working to start trying to reduce it. See the GraalVM docs for fine-grained
@@ -67,11 +73,15 @@ public class MainApplication {
                 // python.Executable option ensures we import the site module at startup, but only
                 // within the virtualenv.
                         option("python.ForceImportSite", "true").
+                        currentWorkingDirectory(pythonScriptLocation).
                         build();
-        InputStreamReader code = new InputStreamReader(MainApplication.class.getClassLoader().getResourceAsStream(SOURCE_FILE_NAME));
+        // InputStreamReader code = new InputStreamReader(MainApplication.class.getClassLoader().getResourceAsStream(SOURCE_FILE_NAME));
         Source source;
         try {
-            source = Source.newBuilder(PYTHON, code, SOURCE_FILE_NAME).build();
+            source = Source
+                    .newBuilder(PYTHON, pythonScriptLocation.resolve("constraints.py").toFile())
+                    .build();
+            // source = Source.newBuilder(PYTHON, code, SOURCE_FILE_NAME).build();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
