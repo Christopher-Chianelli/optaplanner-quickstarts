@@ -14,8 +14,6 @@ HardSoftScore = java.type("org.optaplanner.core.api.score.buildin.hardsoft.HardS
 
 today = date.today()
 def within30Mins(lesson1, lesson2):
-    if lesson1.timeslot is None or lesson2.timeslot is None:
-        return False
     between = datetime.combine(today, lesson1.timeslot.endTime) - datetime.combine(today, lesson2.timeslot.startTime)
     return timedelta(minutes=0) <= between <= timedelta(minutes=30)
 
@@ -69,9 +67,8 @@ def teacherRoomStability(constraintFactory):
 def teacherTimeEfficiency(constraintFactory):
     # A teacher prefers to teach sequential lessons and dislikes gaps between lessons.
     return constraintFactory["from"](LessonClass)\
-                .filter(lambda lesson: lesson.timeslot is not None)\
                 .join(LessonClass, Joiners.equal(lambda lesson: lesson.teacher),
-                        Joiners.equal(lambda lesson: lesson.timeslot is not None and lesson.timeslot.dayOfWeek)) \
+                        Joiners.equal(lambda lesson: lesson.timeslot.dayOfWeek)) \
                 .filter(within30Mins) \
                 .reward("Teacher time efficiency", HardSoftScore.ONE_SOFT)
 
@@ -81,6 +78,6 @@ def studentGroupSubjectVariety(constraintFactory):
         .join(LessonClass,
                         Joiners.equal(lambda lesson: lesson.subject),
                         Joiners.equal(lambda lesson: lesson.studentGroup),
-                        Joiners.equal(lambda lesson: lesson.timeslot is not None and lesson.timeslot.dayOfWeek)) \
+                        Joiners.equal(lambda lesson: lesson.timeslot.dayOfWeek)) \
         .filter(within30Mins) \
         .penalize("Student group subject variety", HardSoftScore.ONE_SOFT)
