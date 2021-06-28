@@ -1,9 +1,10 @@
 import java
-from annotations import PlanningId, PlanningScore, PlanningVariable, ValueRangeProvider, PlanningEntityCollectionProperty, ProblemFactCollectionProperty
+from annotations import ProblemFact, PlanningEntity, PlanningSolution, PlanningId, PlanningScore, PlanningVariable, ValueRangeProvider, PlanningEntityCollectionProperty, ProblemFactCollectionProperty
 from setup import generatePlanningEntityClass, generateProblemFactClass
 from datetime import time
 from functools import reduce
 
+@ProblemFact
 class Room:
     def __init__(self, id, name):
         self.id = id
@@ -16,6 +17,7 @@ class Room:
     def __str__(self):
         return "Room(id=" + str(self.id) + ", name=" + str(self.name) + ")"
 
+@ProblemFact
 class Timeslot:
     def __init__(self, id, dayOfWeek, startTime, endTime):
         self.id = id
@@ -32,9 +34,7 @@ class Timeslot:
                ", dayOfWeek=" + str(self.dayOfWeek) + ", startTime=" + str(self.startTime) + \
                ", endTime=" + str(self.endTime) + ")"
 
-TimeslotClass = generateProblemFactClass(Timeslot)
-RoomClass = generateProblemFactClass(Room)
-
+@PlanningEntity
 class Lesson:
     def __init__(self, id, subject, teacher, studentGroup, timeslot=None, room=None):
         self.id = id
@@ -48,14 +48,14 @@ class Lesson:
     def getId(self):
         return self.id
 
-    @PlanningVariable(TimeslotClass, valueRangeProviderRefs=["timeslotRange"])
+    @PlanningVariable(Timeslot, valueRangeProviderRefs=["timeslotRange"])
     def getTimeslot(self):
         return self.timeslot
 
     def setTimeslot(self, newTimeslot):
         self.timeslot = newTimeslot
 
-    @PlanningVariable(RoomClass, valueRangeProviderRefs=["roomRange"])
+    @PlanningVariable(Room, valueRangeProviderRefs=["roomRange"])
     def getRoom(self):
         return self.room
 
@@ -82,6 +82,7 @@ def listString(aList):
     else:
         return "[" + reduce(itemConcat, aList[1:], str(aList[0])) + "]"
 
+@PlanningSolution
 class TimeTable:
     def __init__(self, timeslotList=[], roomList=[], lessonList=[], score=None):
         self.timeslotList = timeslotList
@@ -89,17 +90,17 @@ class TimeTable:
         self.lessonList = lessonList
         self.score = score
 
-    @ProblemFactCollectionProperty(TimeslotClass)
+    @ProblemFactCollectionProperty(Timeslot)
     @ValueRangeProvider(id = "timeslotRange")
     def getTimeslotList(self):
         return self.timeslotList
 
-    @ProblemFactCollectionProperty(RoomClass)
+    @ProblemFactCollectionProperty(Room)
     @ValueRangeProvider(id = "roomRange")
     def getRoomList(self):
         return self.roomList
 
-    @PlanningEntityCollectionProperty(LessonClass)
+    @PlanningEntityCollectionProperty(Lesson)
     def getLessonList(self):
         return self.lessonList
 

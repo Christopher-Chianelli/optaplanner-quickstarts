@@ -1,12 +1,12 @@
 import java
-from setup import generatePlanningEntityClass, generatePlanningSolutionClass, generateProblemFactClass
+from annotations import ConstraintProvider
+from setup import getClass
 from domain import TimeTable, Lesson, Room
 from datetime import datetime, date, timedelta
 
-TimeTableClass = generatePlanningSolutionClass(TimeTable)
-LessonClass = generatePlanningEntityClass(Lesson)
-
-RoomClass = generateProblemFactClass(Room)
+TimeTableClass = getClass(TimeTable)
+LessonClass = getClass(Lesson)
+RoomClass = getClass(Room)
 
 Joiners = java.type("org.optaplanner.core.api.score.stream.Joiners")
 HardSoftScore = java.type("org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore")
@@ -17,6 +17,7 @@ def within30Mins(lesson1, lesson2):
     between = datetime.combine(today, lesson1.timeslot.endTime) - datetime.combine(today, lesson2.timeslot.startTime)
     return timedelta(minutes=0) <= between <= timedelta(minutes=30)
 
+@ConstraintProvider
 def defineConstraints(constraintFactory):
     return [
         # Hard constraints

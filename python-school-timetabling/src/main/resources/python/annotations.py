@@ -1,4 +1,5 @@
 import java
+from setup import generatePlanningEntityClass, generateProblemFactClass, generatePlanningSolutionClass, generateConstraintProviderClass
 
 PythonWrapperGenerator = java.type("org.acme.schooltimetabling.gizmo.PythonWrapperGenerator")
 
@@ -45,7 +46,7 @@ def PlanningVariable(type, valueRangeProviderRefs, nullable=False, graphType=Non
     def PlanningVariableFunctionWrapper(variableGetterFunction):
         variableGetterFunction.__optaplannerPlanningVariable = MyPlanningVariable(valueRangeProviderRefs, nullable, graphType, strengthComparatorClass,
                                                                                   strengthWeightFactoryClass)
-        variableGetterFunction.__return = type
+        variableGetterFunction.__return = type.__javaClass
         return variableGetterFunction
     return PlanningVariableFunctionWrapper
 
@@ -56,7 +57,7 @@ class MyProblemFactCollectionProperty(MyAnnotation):
 
 def ProblemFactCollectionProperty(type):
     def ProblemFactCollectionPropertyFunctionMapper(getterFunction):
-        getterFunction.__return = PythonWrapperGenerator.getArrayClass(type)
+        getterFunction.__return = PythonWrapperGenerator.getArrayClass(type.__javaClass)
         getterFunction.__optaplannerPlanningEntityCollectionProperty = MyProblemFactCollectionProperty()
         return getterFunction
     return ProblemFactCollectionPropertyFunctionMapper
@@ -69,7 +70,7 @@ class MyPlanningEntityCollectionProperty(MyAnnotation):
 def PlanningEntityCollectionProperty(type):
     def PlanningEntityCollectionPropertyFunctionMapper(getterFunction):
         getterFunction.__optaplannerPlanningEntityCollectionProperty = MyPlanningEntityCollectionProperty()
-        getterFunction.__return = PythonWrapperGenerator.getArrayClass(type)
+        getterFunction.__return = PythonWrapperGenerator.getArrayClass(type.__javaClass)
         return getterFunction
     return PlanningEntityCollectionPropertyFunctionMapper
 
@@ -115,3 +116,19 @@ def PlanningScore(type,
         getterFunction.__return = type
         return getterFunction
     return PlanningScoreFunctionWrapper
+
+def PlanningEntity(planningEntityClass):
+    planningEntityClass.__javaClass = generatePlanningEntityClass(planningEntityClass)
+    return planningEntityClass
+
+def ProblemFact(problemFactClass):
+    problemFactClass.__javaClass = generateProblemFactClass(problemFactClass)
+    return problemFactClass
+
+def PlanningSolution(planningSolutionClass):
+    planningSolutionClass.__javaClass = generatePlanningSolutionClass(planningSolutionClass)
+    return planningSolutionClass
+
+def ConstraintProvider(constraintProviderFunction):
+    constraintProviderFunction.__javaClass = generateConstraintProviderClass(constraintProviderFunction)
+    return constraintProviderFunction
